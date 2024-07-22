@@ -14,6 +14,11 @@ void delete_buffer(unsigned char* buffer) {
 }
 
 int main(int argv, char* argc[]) {
+    if (argv < 2) {
+        printf("Usage: ./8086_disassembler assembly_bin\n");
+        return 1;
+    }
+
     printf("number of arguments: %d\n", argv);
     printf("arguments:\n");
     for (int i = 0; i < argv; i++) {
@@ -21,9 +26,13 @@ int main(int argv, char* argc[]) {
     }
     printf("\n");
 
+    FILE* assembly_ptr;
+    assembly_ptr = fopen(argc[1], "rb");
+
     unsigned char* buffer;
     printf("initializing buffer...\n");
     buffer = initialize_buffer(buffer);
+    fread(buffer, sizeof(buffer), 1, assembly_ptr);
     printf("deleting buffer...\n");
     delete_buffer(buffer);
     
