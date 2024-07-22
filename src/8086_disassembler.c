@@ -1,17 +1,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-unsigned char* initialize_buffer(unsigned char* buffer);
+unsigned char* initialize_buffer(unsigned char* buffer, int buffer_size);
+void decode_assembly(unsigned char* buffer);
 void delete_buffer(unsigned char* buffer);
 
-unsigned char* initialize_buffer(unsigned char* buffer) {
-    buffer = (unsigned char*)malloc(sizeof(unsigned char) * 32);
+unsigned char* initialize_buffer(unsigned char* buffer, int buffer_size) {
+    buffer = (unsigned char*)malloc(sizeof(unsigned char) * buffer_size);
     return buffer;
+}
+
+void decode_assembly(unsigned char* buffer) {
+    printf("bits 16\n\n");
+    int i = 0;
+    while (buffer[i + 1] != 0) {
+        printf("%x%x\n", buffer[i], buffer[i + 1]);
+        i += 2;
+    }
 }
 
 void delete_buffer(unsigned char* buffer) {
     free(buffer);
 }
+
 
 int main(int argv, char* argc[]) {
     if (argv < 2) {
@@ -30,9 +41,11 @@ int main(int argv, char* argc[]) {
     assembly_ptr = fopen(argc[1], "rb");
 
     unsigned char* buffer;
-    printf("initializing buffer...\n");
-    buffer = initialize_buffer(buffer);
-    fread(buffer, sizeof(buffer), 1, assembly_ptr);
+    int buffer_size = 64;
+    printf("initializing buffer of %d bytes...\n", buffer_size);
+    buffer = initialize_buffer(buffer, buffer_size);
+    fread(buffer, buffer_size, 1, assembly_ptr);
+    decode_assembly(buffer);
     printf("deleting buffer...\n");
     delete_buffer(buffer);
     
