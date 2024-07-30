@@ -2,12 +2,17 @@
 #include <stdlib.h>
 
 unsigned char* initialize_buffer(unsigned char* buffer, int buffer_size);
+char hex_to_bin(char hex);
 void decode_assembly(unsigned char* buffer);
 void delete_buffer(unsigned char* buffer);
 
 unsigned char* initialize_buffer(unsigned char* buffer, int buffer_size) {
     buffer = (unsigned char*)malloc(sizeof(unsigned char) * buffer_size);
     return buffer;
+}
+
+char hex_to_bin(char hex) {
+
 }
 
 void decode_assembly(unsigned char* buffer) {
