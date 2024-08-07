@@ -95,14 +95,14 @@ void decode_byte_2(unsigned char byte_2, int width) {
     unsigned char des = byte_2 & DES_BITS;
 
     if (width == 1) {
-        decode_reg_wide(src >> 3);
-        printf(", ");
         decode_reg_wide(des);
+        printf(", ");
+        decode_reg_wide(src >> 3);
         printf("\n");
     } else if (width == 0) {
-        decode_reg(src >> 3);
-        printf(", ");
         decode_reg(des);
+        printf(", ");
+        decode_reg(src >> 3);
         printf("\n");
     }
 }
@@ -115,13 +115,13 @@ void decode_assembly(unsigned char* buffer) {
     printf("bits 16\n\n");
     int i = 0;
     while (buffer[i + 1] != 0) {
-        printf("%x%x\n", buffer[i], buffer[i + 1]);
+        // printf("%x%x\n", buffer[i], buffer[i + 1]);
+        int width = is_wide(buffer[i]);
+        decode_byte_1(buffer[i]);
+        decode_byte_2(buffer[i + 1], width);
         i += 2;
     }
-    int width = is_wide(buffer[0]);
-    decode_byte_1(buffer[0]);
-    decode_byte_2(buffer[1], width);
-    printf("is_src_des: %d\n", is_src_des(buffer[0]));
+    // printf("is_src_des: %d\n", is_src_des(buffer[0]));
 }
 
 void delete_buffer(unsigned char* buffer) {
@@ -134,23 +134,19 @@ int main(int argv, char* argc[]) {
         return 1;
     }
 
-    printf("number of arguments: %d\n", argv);
-    printf("arguments:\n");
-    for (int i = 0; i < argv; i++) {
-        printf("%s ", argc[i]);
-    }
-    printf("\n");
+    // printf("number of arguments: %d\n", argv);
+    // printf("arguments:\n");
 
     FILE* assembly_ptr;
     assembly_ptr = fopen(argc[1], "rb");
 
     unsigned char* buffer;
     int buffer_size = 64;
-    printf("initializing buffer of %d bytes...\n", buffer_size);
+    // printf("initializing buffer of %d bytes...\n", buffer_size);
     buffer = initialize_buffer(buffer, buffer_size);
     fread(buffer, buffer_size, 1, assembly_ptr);
     decode_assembly(buffer);
-    printf("deleting buffer...\n");
+    // printf("deleting buffer...\n");
     delete_buffer(buffer);
     
     return 0;
