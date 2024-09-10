@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #define OPCODE_BITS 252
+#define OPCODE_BITS_IMMEDIATE 176
 #define DIRECTION_BIT 2
 #define WIDTH_BIT 1
 #define SRC_BITS 56
@@ -12,6 +13,8 @@ void decode_byte_1(unsigned char byte_1);
 void decode_byte_2(unsigned char byte_2, int width);
 void decode_assembly(unsigned char* buffer);
 void delete_buffer(unsigned char* buffer);
+int check_mod(unsigned char byte_2);
+int check_rm(unsigned char byte_2);
 
 unsigned char* initialize_buffer(unsigned char* buffer, int buffer_size) {
     buffer = (unsigned char*)malloc(sizeof(unsigned char) * buffer_size);
@@ -25,6 +28,12 @@ int is_src_des(unsigned char instruction) {
 
 void decode_byte_1(unsigned char byte_1) {
     int opcode = byte_1 & OPCODE_BITS;
+    int opcode_immediate = byte_1 & OPCODE_BITS_IMMEDIATE;
+    switch (opcode_immediate) {
+        case 176:
+            printf("mov ");
+            break;
+    }
     switch (opcode) {
         case 136:
             printf("mov ");
@@ -115,7 +124,7 @@ void decode_assembly(unsigned char* buffer) {
     printf("bits 16\n\n");
     int i = 0;
     while (buffer[i + 1] != 0) {
-        // printf("%x%x\n", buffer[i], buffer[i + 1]);
+        printf("%x%x\n", buffer[i], buffer[i + 1]);
         int width = is_wide(buffer[i]);
         decode_byte_1(buffer[i]);
         decode_byte_2(buffer[i + 1], width);
