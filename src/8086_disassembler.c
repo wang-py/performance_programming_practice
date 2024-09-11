@@ -4,13 +4,19 @@
 #define OPCODE_BITS_IMMEDIATE 176
 #define DIRECTION_BIT 2
 #define WIDTH_BIT 1
+#define WIDTH_BIT_IMMEDIATE 8
 #define SRC_BITS 56
 #define DES_BITS 7
+#define REG_IMMEDIATE_MASK 7
+#define IMMEDIATE_MODE 1
 
 unsigned char* initialize_buffer(unsigned char* buffer, int buffer_size);
 int is_wide(unsigned char byte_1);
-void decode_byte_1(unsigned char byte_1);
+void decode_reg(unsigned char reg);
+void decode_reg_wide(unsigned char reg);
+int decode_byte_1(unsigned char byte_1);
 void decode_byte_2(unsigned char byte_2, int width);
+void decode_byte_2_i(unsigned char byte_2, int width);
 void decode_assembly(unsigned char* buffer);
 void delete_buffer(unsigned char* buffer);
 int check_mod(unsigned char byte_2);
@@ -26,12 +32,19 @@ int is_src_des(unsigned char instruction) {
     return instruction & DIRECTION_BIT;
 }
 
-void decode_byte_1(unsigned char byte_1) {
+int decode_byte_1(unsigned char byte_1) {
     int opcode = byte_1 & OPCODE_BITS;
     int opcode_immediate = byte_1 & OPCODE_BITS_IMMEDIATE;
+    int retval = 0;
     switch (opcode_immediate) {
         case 176:
             printf("mov ");
+            if ((byte_1 & WIDTH_BIT_IMMEDIATE) == WIDTH_BIT_IMMEDIATE) {
+                decode_reg_wide(byte_1 & REG_IMMEDIATE_MASK);
+            } else {
+                decode_reg(byte_1 & REG_IMMEDIATE_MASK);
+            }
+            retval = IMMEDIATE_MODE;
             break;
     }
     switch (opcode) {
@@ -39,6 +52,8 @@ void decode_byte_1(unsigned char byte_1) {
             printf("mov ");
             break;
     }
+
+    return retval;
 }
 
 void decode_reg_wide(unsigned char reg) {
@@ -116,6 +131,24 @@ void decode_byte_2(unsigned char byte_2, int width) {
     }
 }
 
+// decode byte 2 in immediate mode
+void decode_byte_2_i(unsigned char byte_2, int width) {
+    unsigned char data_8 = 0;
+    unsigned int data_16 = 0;
+
+    if (width == 1) {
+        data_16 = (unsigned int) byte_2;
+        printf(", ");
+        printf("%d", data_16);
+        printf("\n");
+    } else if (width == 0) {
+        data_8 = (unsigned char) byte_2;
+        printf(", ");
+        printf("%c", data_8);
+        printf("\n");
+    }
+}
+
 int is_wide(unsigned char byte_1) {
     return byte_1 & WIDTH_BIT;
 }
@@ -123,11 +156,16 @@ int is_wide(unsigned char byte_1) {
 void decode_assembly(unsigned char* buffer) {
     printf("bits 16\n\n");
     int i = 0;
+    int mode = 0;
     while (buffer[i + 1] != 0) {
         printf("%x%x\n", buffer[i], buffer[i + 1]);
         int width = is_wide(buffer[i]);
-        decode_byte_1(buffer[i]);
-        decode_byte_2(buffer[i + 1], width);
+        mode = decode_byte_1(buffer[i]);
+        if (mode == IMMEDIATE_MODE) {
+            decode_byte_2_i(buffer[i + 1], width);
+        } else {
+            decode_byte_2(buffer[i + 1], width);
+        }
         i += 2;
     }
     // printf("is_src_des: %d\n", is_src_des(buffer[0]));
