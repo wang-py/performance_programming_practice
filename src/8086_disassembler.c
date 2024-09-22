@@ -12,12 +12,13 @@
 
 unsigned char* initialize_buffer(unsigned char* buffer, int buffer_size);
 int is_wide(unsigned char byte_1);
+int is_wide_immediate(unsigned char byte_1);
 void decode_reg(unsigned char reg);
 void decode_reg_wide(unsigned char reg);
 int decode_byte_1(unsigned char byte_1);
 void decode_byte_2(unsigned char byte_2, int width);
 void decode_byte_2_i(unsigned char byte_2, int width);
-void decode_assembly(unsigned char* buffer);
+void decode_assembly(unsigned char* buffer, int inst_size);
 void delete_buffer(unsigned char* buffer);
 int check_mod(unsigned char byte_2);
 int check_rm(unsigned char byte_2);
@@ -133,40 +134,57 @@ void decode_byte_2(unsigned char byte_2, int width) {
 
 // decode byte 2 in immediate mode
 void decode_byte_2_i(unsigned char byte_2, int width) {
-    unsigned char data_8 = 0;
-    unsigned int data_16 = 0;
+    signed char data_8 = 0;
+    signed short data_16 = 0;
 
     if (width == 1) {
-        data_16 = (unsigned int) byte_2;
+        data_16 = (signed short) byte_2;
         printf(", ");
-        printf("%d", data_16);
+        printf("%hi", data_16);
         printf("\n");
     } else if (width == 0) {
-        data_8 = (unsigned char) byte_2;
+        data_8 = (signed char) byte_2;
         printf(", ");
-        printf("%c", data_8);
+        printf("%d", data_8);
         printf("\n");
     }
 }
 
 int is_wide(unsigned char byte_1) {
+
     return byte_1 & WIDTH_BIT;
 }
 
-void decode_assembly(unsigned char* buffer) {
+int is_wide_immediate(unsigned char byte_1) {
+    if ((byte_1 & WIDTH_BIT_IMMEDIATE) == WIDTH_BIT_IMMEDIATE) {
+        return 1;
+    }
+
+    return 0;
+}
+
+void decode_assembly(unsigned char* buffer, int inst_size) {
     printf("bits 16\n\n");
     int i = 0;
     int mode = 0;
-    while (buffer[i + 1] != 0) {
-        printf("%x%x\n", buffer[i], buffer[i + 1]);
-        int width = is_wide(buffer[i]);
+    int width = 0;
+    int width_immediate = 0;
+    while (i < inst_size) {
+        printf("%x %x\n", buffer[i], buffer[i + 1]);
+        width = is_wide(buffer[i]);
         mode = decode_byte_1(buffer[i]);
         if (mode == IMMEDIATE_MODE) {
-            decode_byte_2_i(buffer[i + 1], width);
+            width_immediate = is_wide_immediate(buffer[i]);
+            decode_byte_2_i(buffer[i + 1], width_immediate);
+            if (width_immediate == 1) {
+                i += 3;
+            } else {
+                i += 2;
+            }
         } else {
             decode_byte_2(buffer[i + 1], width);
+            i += 2;
         }
-        i += 2;
     }
     // printf("is_src_des: %d\n", is_src_des(buffer[0]));
 }
@@ -186,13 +204,16 @@ int main(int argv, char* argc[]) {
 
     FILE* assembly_ptr;
     assembly_ptr = fopen(argc[1], "rb");
+    fseek(assembly_ptr, 0L, SEEK_END);
+    int inst_size = ftell(assembly_ptr);
+    rewind(assembly_ptr);
 
     unsigned char* buffer;
-    int buffer_size = 64;
+    int buffer_size = inst_size;
     // printf("initializing buffer of %d bytes...\n", buffer_size);
     buffer = initialize_buffer(buffer, buffer_size);
     fread(buffer, buffer_size, 1, assembly_ptr);
-    decode_assembly(buffer);
+    decode_assembly(buffer, inst_size);
     // printf("deleting buffer...\n");
     delete_buffer(buffer);
     
