@@ -9,12 +9,14 @@
 #define DES_BITS 7
 #define REG_IMMEDIATE_MASK 7
 #define IMMEDIATE_MODE 1
+#define MOD_BITS 3
 
 unsigned char* initialize_buffer(unsigned char* buffer, int buffer_size);
 int is_wide(unsigned char byte_1);
 int is_wide_immediate(unsigned char byte_1);
 void decode_reg(unsigned char reg);
 void decode_reg_wide(unsigned char reg);
+void decode_effective_address_calc(unsigned char rm);
 int decode_byte_1(unsigned char byte_1);
 void decode_byte_2(unsigned char byte_2, int width);
 void decode_byte_2_i(unsigned char byte_2, int width);
@@ -115,21 +117,65 @@ void decode_reg(unsigned char reg) {
     }
 }
 
+void decode_effective_address_calc(unsigned char rm) {
+    switch (rm) {
+        case 0:
+            printf("[bx + si]\n");
+            break;
+        case 1:
+            printf("[bx + di]\n");
+            break;
+        case 2:
+            printf("[bp + si]\n");
+            break;
+        case 3:
+            printf("[bp + di]\n");
+            break;
+        case 4:
+            printf("[si]\n");
+            break;
+        case 5:
+            printf("[di]\n");
+            break;
+        case 6:
+            printf("[bp]\n");
+            break;
+        case 7:
+            printf("[bx]\n");
+            break;
+    }
+}
+
 void decode_byte_2(unsigned char byte_2, int width) {
+    unsigned char mod = (byte_2 >> 6) & MOD_BITS;
     unsigned char src = byte_2 & SRC_BITS;
     unsigned char des = byte_2 & DES_BITS;
 
-    if (width == 1) {
-        decode_reg_wide(des);
-        printf(", ");
-        decode_reg_wide(src >> 3);
-        printf("\n");
-    } else if (width == 0) {
-        decode_reg(des);
-        printf(", ");
-        decode_reg(src >> 3);
-        printf("\n");
+    switch (mod) {
+        case 0:
+            decode_effective_address_calc(des);
+            break;
+        case 1:
+            decode_effective_address_calc(des);
+            break;
+        case 2:
+            decode_effective_address_calc(des);
+            break;
+        case 3:
+            if (width == 1) {
+                decode_reg_wide(des);
+                printf(", ");
+                decode_reg_wide(src >> 3);
+                printf("\n");
+            } else if (width == 0) {
+                decode_reg(des);
+                printf(", ");
+                decode_reg(src >> 3);
+                printf("\n");
+            }
+            break;
     }
+
 }
 
 // decode byte 2 in immediate mode
@@ -170,7 +216,7 @@ void decode_assembly(unsigned char* buffer, int inst_size) {
     int width = 0;
     int width_immediate = 0;
     while (i < inst_size) {
-        printf("%x %x\n", buffer[i], buffer[i + 1]);
+        // printf("%x %x\n", buffer[i], buffer[i + 1]);
         width = is_wide(buffer[i]);
         mode = decode_byte_1(buffer[i]);
         if (mode == IMMEDIATE_MODE) {
