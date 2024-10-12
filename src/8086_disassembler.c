@@ -186,15 +186,6 @@ unsigned char decode_byte_2(unsigned char* byte_2, int width) {
     switch (mod) {
         case 0:
             decode_effective_address_calc(des);
-            if (width == 1) {
-                printf(", ");
-                decode_reg_wide(src >> 3);
-                printf("\n");
-            } else if (width == 0) {
-                printf(", ");
-                decode_reg(src >> 3);
-                printf("\n");
-            }
             break;
         case 1:
             decode_effective_address_calc_disp(des);
@@ -203,15 +194,6 @@ unsigned char decode_byte_2(unsigned char* byte_2, int width) {
                 printf(" + %d]", disp_8);
             } else {
                 printf("]");
-            }
-            if (width == 1) {
-                printf(", ");
-                decode_reg_wide(src >> 3);
-                printf("\n");
-            } else if (width == 0) {
-                printf(", ");
-                decode_reg(src >> 3);
-                printf("\n");
             }
             break;
         case 2:
@@ -222,31 +204,20 @@ unsigned char decode_byte_2(unsigned char* byte_2, int width) {
             } else {
                 printf("]");
             }
-            if (width == 1) {
-                printf(", ");
-                decode_reg_wide(src >> 3);
-                printf("\n");
-            } else if (width == 0) {
-                printf(", ");
-                decode_reg(src >> 3);
-                printf("\n");
-            }
             break;
         case 3:
-            if (width == 1) {
-                decode_reg_wide(des);
-                printf(", ");
-                decode_reg_wide(src >> 3);
-                printf("\n");
-            } else if (width == 0) {
-                decode_reg(des);
-                printf(", ");
-                decode_reg(src >> 3);
-                printf("\n");
-            }
             break;
     }
 
+    if (width == 1) {
+        printf(", ");
+        decode_reg_wide(src >> 3);
+        printf("\n");
+    } else if (width == 0) {
+        printf(", ");
+        decode_reg(src >> 3);
+        printf("\n");
+    }
     return mod;
 }
 
