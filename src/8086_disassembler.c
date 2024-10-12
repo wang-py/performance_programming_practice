@@ -19,7 +19,7 @@ void decode_reg_wide(unsigned char reg);
 void decode_effective_address_calc(unsigned char rm);
 void decode_effective_address_calc_disp(unsigned char rm);
 int decode_byte_1(unsigned char byte_1);
-unsigned char decode_byte_2(unsigned char byte_2, int width);
+unsigned char decode_byte_2(unsigned char* byte_2, int width);
 void decode_byte_2_i(unsigned char byte_2, int width);
 void decode_assembly(unsigned char* buffer, int inst_size);
 void delete_buffer(unsigned char* buffer);
@@ -121,28 +121,28 @@ void decode_reg(unsigned char reg) {
 void decode_effective_address_calc(unsigned char rm) {
     switch (rm) {
         case 0:
-            printf("[bx + si]\n");
+            printf("[bx + si]");
             break;
         case 1:
-            printf("[bx + di]\n");
+            printf("[bx + di]");
             break;
         case 2:
-            printf("[bp + si]\n");
+            printf("[bp + si]");
             break;
         case 3:
-            printf("[bp + di]\n");
+            printf("[bp + di]");
             break;
         case 4:
-            printf("[si]\n");
+            printf("[si]");
             break;
         case 5:
-            printf("[di]\n");
+            printf("[di]");
             break;
         case 6:
-            printf("[bp]\n");
+            printf("[bp]");
             break;
         case 7:
-            printf("[bx]\n");
+            printf("[bx]");
             break;
     }
 }
@@ -150,46 +150,87 @@ void decode_effective_address_calc(unsigned char rm) {
 void decode_effective_address_calc_disp(unsigned char rm) {
     switch (rm) {
         case 0:
-            printf("[bx + si + ");
+            printf("[bx + si");
             break;
         case 1:
-            printf("[bx + di + ");
+            printf("[bx + di");
             break;
         case 2:
-            printf("[bp + si + ");
+            printf("[bp + si");
             break;
         case 3:
-            printf("[bp + di + ");
+            printf("[bp + di");
             break;
         case 4:
-            printf("[si + ");
+            printf("[si");
             break;
         case 5:
-            printf("[di + ");
+            printf("[di");
             break;
         case 6:
-            printf("[bp + ");
+            printf("[bp");
             break;
         case 7:
-            printf("[bx + ");
+            printf("[bx");
             break;
     }
 }
 
-unsigned char decode_byte_2(unsigned char byte_2, int width) {
-    unsigned char mod = (byte_2 >> 6) & MOD_BITS;
-    unsigned char src = byte_2 & SRC_BITS;
-    unsigned char des = byte_2 & DES_BITS;
+unsigned char decode_byte_2(unsigned char* byte_2, int width) {
+    unsigned char mod = (*byte_2 >> 6) & MOD_BITS;
+    unsigned char src = *byte_2 & SRC_BITS;
+    unsigned char des = *byte_2 & DES_BITS;
+    unsigned char disp_8 = 0;
+    unsigned int disp_16 = 0;
 
     switch (mod) {
         case 0:
             decode_effective_address_calc(des);
+            if (width == 1) {
+                printf(", ");
+                decode_reg_wide(src >> 3);
+                printf("\n");
+            } else if (width == 0) {
+                printf(", ");
+                decode_reg(src >> 3);
+                printf("\n");
+            }
             break;
         case 1:
-            decode_effective_address_calc(des);
+            decode_effective_address_calc_disp(des);
+            disp_8 = *(byte_2 + 1);
+            if (disp_8 != 0) {
+                printf(" + %d]", disp_8);
+            } else {
+                printf("]");
+            }
+            if (width == 1) {
+                printf(", ");
+                decode_reg_wide(src >> 3);
+                printf("\n");
+            } else if (width == 0) {
+                printf(", ");
+                decode_reg(src >> 3);
+                printf("\n");
+            }
             break;
         case 2:
-            decode_effective_address_calc(des);
+            decode_effective_address_calc_disp(des);
+            disp_16 = *(unsigned int*)(byte_2 + 1);
+            if (disp_16 != 0) {
+                printf(" + %hi]", disp_16);
+            } else {
+                printf("]");
+            }
+            if (width == 1) {
+                printf(", ");
+                decode_reg_wide(src >> 3);
+                printf("\n");
+            } else if (width == 0) {
+                printf(", ");
+                decode_reg(src >> 3);
+                printf("\n");
+            }
             break;
         case 3:
             if (width == 1) {
@@ -260,11 +301,13 @@ void decode_assembly(unsigned char* buffer, int inst_size) {
                 i += 2;
             }
         } else {
-            disp_mode = decode_byte_2(buffer[i + 1], width);
+            disp_mode = decode_byte_2(buffer + i + 1, width);
             switch (disp_mode) {
+                // + D8
                 case 1:
                     i += 3;
                     break;
+                // + D16
                 case 2:
                     i += 4;
                     break;
