@@ -17,8 +17,9 @@ int is_wide_immediate(unsigned char byte_1);
 void decode_reg(unsigned char reg);
 void decode_reg_wide(unsigned char reg);
 void decode_effective_address_calc(unsigned char rm);
+void decode_effective_address_calc_disp(unsigned char rm);
 int decode_byte_1(unsigned char byte_1);
-void decode_byte_2(unsigned char byte_2, int width);
+unsigned char decode_byte_2(unsigned char byte_2, int width);
 void decode_byte_2_i(unsigned char byte_2, int width);
 void decode_assembly(unsigned char* buffer, int inst_size);
 void delete_buffer(unsigned char* buffer);
@@ -146,7 +147,36 @@ void decode_effective_address_calc(unsigned char rm) {
     }
 }
 
-void decode_byte_2(unsigned char byte_2, int width) {
+void decode_effective_address_calc_disp(unsigned char rm) {
+    switch (rm) {
+        case 0:
+            printf("[bx + si + ");
+            break;
+        case 1:
+            printf("[bx + di + ");
+            break;
+        case 2:
+            printf("[bp + si + ");
+            break;
+        case 3:
+            printf("[bp + di + ");
+            break;
+        case 4:
+            printf("[si + ");
+            break;
+        case 5:
+            printf("[di + ");
+            break;
+        case 6:
+            printf("[bp + ");
+            break;
+        case 7:
+            printf("[bx + ");
+            break;
+    }
+}
+
+unsigned char decode_byte_2(unsigned char byte_2, int width) {
     unsigned char mod = (byte_2 >> 6) & MOD_BITS;
     unsigned char src = byte_2 & SRC_BITS;
     unsigned char des = byte_2 & DES_BITS;
@@ -176,6 +206,7 @@ void decode_byte_2(unsigned char byte_2, int width) {
             break;
     }
 
+    return mod;
 }
 
 // decode byte 2 in immediate mode
@@ -215,6 +246,7 @@ void decode_assembly(unsigned char* buffer, int inst_size) {
     int mode = 0;
     int width = 0;
     int width_immediate = 0;
+    unsigned char disp_mode = 0;
     while (i < inst_size) {
         // printf("%x %x\n", buffer[i], buffer[i + 1]);
         width = is_wide(buffer[i]);
@@ -228,8 +260,17 @@ void decode_assembly(unsigned char* buffer, int inst_size) {
                 i += 2;
             }
         } else {
-            decode_byte_2(buffer[i + 1], width);
-            i += 2;
+            disp_mode = decode_byte_2(buffer[i + 1], width);
+            switch (disp_mode) {
+                case 1:
+                    i += 3;
+                    break;
+                case 2:
+                    i += 4;
+                    break;
+                default:
+                    i += 2;
+            }
         }
     }
     // printf("is_src_des: %d\n", is_src_des(buffer[0]));
