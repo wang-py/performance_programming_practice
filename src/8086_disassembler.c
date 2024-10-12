@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #define OPCODE_BITS 252
 #define OPCODE_BITS_IMMEDIATE 176
-#define DIRECTION_BIT 2
 #define WIDTH_BIT 1
 #define WIDTH_BIT_IMMEDIATE 8
 #define REG_BITS 7
@@ -15,8 +14,10 @@ unsigned char* initialize_buffer(unsigned char* buffer, int buffer_size);
 int is_wide(unsigned char byte_1);
 int is_wide_immediate(unsigned char byte_1);
 int get_direction_bit(unsigned char instruction);
+void decode_reg_field(unsigned char reg, int width);
 void decode_reg(unsigned char reg);
 void decode_reg_wide(unsigned char reg);
+void decode_eac(unsigned char* byte_2, unsigned char rm, unsigned char mod, int width);
 void decode_effective_address_calc(unsigned char rm);
 void decode_effective_address_calc_disp(unsigned char rm);
 int decode_byte_1(unsigned char byte_1);
@@ -34,7 +35,7 @@ unsigned char* initialize_buffer(unsigned char* buffer, int buffer_size) {
 
 
 int get_direction_bit(unsigned char instruction) {
-    return (instruction >> 1) & DIRECTION_BIT;
+    return (instruction >> 1) & 1;
 }
 
 int decode_byte_1(unsigned char byte_1) {
@@ -176,22 +177,17 @@ void decode_effective_address_calc_disp(unsigned char rm) {
             break;
     }
 }
+void decode_reg_field(unsigned char reg, int width) {
+    if (width == 1) {
+        decode_reg_wide(reg);
+    } else if (width == 0) {
+        decode_reg(reg);
+    }
+}
 
-unsigned char decode_byte_2(unsigned char* byte_2, int width, int d) {
-    unsigned char mod = (*byte_2 >> 6) & MOD_BITS;
-    unsigned char reg = (*byte_2 >> 3) & REG_BITS;
-    unsigned char rm = *byte_2 & RM_BITS;
-    unsigned char swap = 0;
+void decode_eac(unsigned char* byte_2, unsigned char rm, unsigned char mod, int width) {
     unsigned char disp_8 = 0;
     unsigned int disp_16 = 0;
-    // printf("reg: %d rm: %d \n", reg, rm);
-
-    // check the direction of mov
-    // if (d == 1) {
-    //     swap = reg;
-    //     reg = rm;
-    //     rm = swap;
-    // }
 
     switch (mod) {
         case 0:
@@ -216,23 +212,39 @@ unsigned char decode_byte_2(unsigned char* byte_2, int width, int d) {
             }
             break;
         case 3:
-            if (width == 1) {
-                decode_reg_wide(rm);
-            } else if (width == 0) {
-                decode_reg(rm);
-            }
+            decode_reg_field(rm, width);
             break;
     }
+}
 
-    if (width == 1) {
+unsigned char decode_byte_2(unsigned char* byte_2, int width, int d) {
+    unsigned char mod = (*byte_2 >> 6) & MOD_BITS;
+    unsigned char reg = (*byte_2 >> 3) & REG_BITS;
+    unsigned char rm = *byte_2 & RM_BITS;
+    unsigned char swap = 0;
+
+    // check the direction of mov
+    if (d == 1) {
+        decode_reg_field(reg, width);
         printf(", ");
-        decode_reg_wide(reg);
-        printf("\n");
-    } else if (width == 0) {
+        decode_eac(byte_2, rm, mod, width);
+    } else {
+        decode_eac(byte_2, rm, mod, width);
         printf(", ");
-        decode_reg(reg);
-        printf("\n");
+        decode_reg_field(reg, width);
     }
+    printf("\n");
+    // printf("after swap reg: %d rm: %d d: %d\n", reg, rm, d);
+
+
+    // if (width == 1) {
+    //     decode_reg_wide(reg);
+    //     printf("\n");
+    // } else if (width == 0) {
+    //     printf(", ");
+    //     decode_reg(reg);
+    //     printf("\n");
+    // }
     return mod;
 }
 
@@ -274,12 +286,13 @@ void decode_assembly(unsigned char* buffer, int inst_size) {
     int width = 0;
     int width_immediate = 0;
     unsigned char disp_mode = 0;
+    int d = 0;
     // direction of mov
-    int d = get_direction_bit(buffer[0]);
     while (i < inst_size) {
         // printf("%x %x\n", buffer[i], buffer[i + 1]);
         width = is_wide(buffer[i]);
         mode = decode_byte_1(buffer[i]);
+        d = get_direction_bit(buffer[i]);
 
         if (mode == IMMEDIATE_MODE) {
             width_immediate = is_wide_immediate(buffer[i]);
