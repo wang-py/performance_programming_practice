@@ -5,8 +5,8 @@
 #define DIRECTION_BIT 2
 #define WIDTH_BIT 1
 #define WIDTH_BIT_IMMEDIATE 8
-#define SRC_BITS 56
-#define DES_BITS 7
+#define REG_BITS 7
+#define RM_BITS 7
 #define REG_IMMEDIATE_MASK 7
 #define IMMEDIATE_MODE 1
 #define MOD_BITS 3
@@ -14,12 +14,13 @@
 unsigned char* initialize_buffer(unsigned char* buffer, int buffer_size);
 int is_wide(unsigned char byte_1);
 int is_wide_immediate(unsigned char byte_1);
+int get_direction_bit(unsigned char instruction);
 void decode_reg(unsigned char reg);
 void decode_reg_wide(unsigned char reg);
 void decode_effective_address_calc(unsigned char rm);
 void decode_effective_address_calc_disp(unsigned char rm);
 int decode_byte_1(unsigned char byte_1);
-unsigned char decode_byte_2(unsigned char* byte_2, int width);
+unsigned char decode_byte_2(unsigned char* byte_2, int width, int d);
 void decode_byte_2_i(unsigned char byte_2, int width);
 void decode_assembly(unsigned char* buffer, int inst_size);
 void delete_buffer(unsigned char* buffer);
@@ -32,8 +33,8 @@ unsigned char* initialize_buffer(unsigned char* buffer, int buffer_size) {
 }
 
 
-int is_src_des(unsigned char instruction) {
-    return instruction & DIRECTION_BIT;
+int get_direction_bit(unsigned char instruction) {
+    return (instruction >> 1) & DIRECTION_BIT;
 }
 
 int decode_byte_1(unsigned char byte_1) {
@@ -176,19 +177,28 @@ void decode_effective_address_calc_disp(unsigned char rm) {
     }
 }
 
-unsigned char decode_byte_2(unsigned char* byte_2, int width) {
+unsigned char decode_byte_2(unsigned char* byte_2, int width, int d) {
     unsigned char mod = (*byte_2 >> 6) & MOD_BITS;
-    unsigned char src = *byte_2 & SRC_BITS;
-    unsigned char des = *byte_2 & DES_BITS;
+    unsigned char reg = (*byte_2 >> 3) & REG_BITS;
+    unsigned char rm = *byte_2 & RM_BITS;
+    unsigned char swap = 0;
     unsigned char disp_8 = 0;
     unsigned int disp_16 = 0;
+    // printf("reg: %d rm: %d \n", reg, rm);
+
+    // check the direction of mov
+    // if (d == 1) {
+    //     swap = reg;
+    //     reg = rm;
+    //     rm = swap;
+    // }
 
     switch (mod) {
         case 0:
-            decode_effective_address_calc(des);
+            decode_effective_address_calc(rm);
             break;
         case 1:
-            decode_effective_address_calc_disp(des);
+            decode_effective_address_calc_disp(rm);
             disp_8 = *(byte_2 + 1);
             if (disp_8 != 0) {
                 printf(" + %d]", disp_8);
@@ -197,7 +207,7 @@ unsigned char decode_byte_2(unsigned char* byte_2, int width) {
             }
             break;
         case 2:
-            decode_effective_address_calc_disp(des);
+            decode_effective_address_calc_disp(rm);
             disp_16 = *(unsigned int*)(byte_2 + 1);
             if (disp_16 != 0) {
                 printf(" + %hi]", disp_16);
@@ -206,16 +216,21 @@ unsigned char decode_byte_2(unsigned char* byte_2, int width) {
             }
             break;
         case 3:
+            if (width == 1) {
+                decode_reg_wide(rm);
+            } else if (width == 0) {
+                decode_reg(rm);
+            }
             break;
     }
 
     if (width == 1) {
         printf(", ");
-        decode_reg_wide(src >> 3);
+        decode_reg_wide(reg);
         printf("\n");
     } else if (width == 0) {
         printf(", ");
-        decode_reg(src >> 3);
+        decode_reg(reg);
         printf("\n");
     }
     return mod;
@@ -259,10 +274,13 @@ void decode_assembly(unsigned char* buffer, int inst_size) {
     int width = 0;
     int width_immediate = 0;
     unsigned char disp_mode = 0;
+    // direction of mov
+    int d = get_direction_bit(buffer[0]);
     while (i < inst_size) {
         // printf("%x %x\n", buffer[i], buffer[i + 1]);
         width = is_wide(buffer[i]);
         mode = decode_byte_1(buffer[i]);
+
         if (mode == IMMEDIATE_MODE) {
             width_immediate = is_wide_immediate(buffer[i]);
             decode_byte_2_i(buffer[i + 1], width_immediate);
@@ -272,7 +290,7 @@ void decode_assembly(unsigned char* buffer, int inst_size) {
                 i += 2;
             }
         } else {
-            disp_mode = decode_byte_2(buffer + i + 1, width);
+            disp_mode = decode_byte_2(buffer + i + 1, width, d);
             switch (disp_mode) {
                 // + D8
                 case 1:
