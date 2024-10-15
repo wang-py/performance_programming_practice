@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #define OPCODE_BITS 252
 #define OPCODE_BITS_IMMEDIATE 176
 #define WIDTH_BIT 1
@@ -22,7 +23,7 @@ void decode_effective_address_calc(unsigned char rm);
 void decode_effective_address_calc_disp(unsigned char rm);
 int decode_byte_1(unsigned char byte_1);
 unsigned char decode_byte_2(unsigned char* byte_2, int width, int d);
-void decode_byte_2_i(unsigned char byte_2, int width);
+void decode_byte_2_i(unsigned char* byte_2, int width);
 void decode_assembly(unsigned char* buffer, int inst_size);
 void delete_buffer(unsigned char* buffer);
 int check_mod(unsigned char byte_2);
@@ -186,8 +187,8 @@ void decode_reg_field(unsigned char reg, int width) {
 }
 
 void decode_eac(unsigned char* byte_2, unsigned char rm, unsigned char mod, int width) {
-    unsigned char disp_8 = 0;
-    unsigned int disp_16 = 0;
+    int8_t disp_8 = 0;
+    int16_t disp_16 = 0;
 
     switch (mod) {
         case 0:
@@ -195,7 +196,7 @@ void decode_eac(unsigned char* byte_2, unsigned char rm, unsigned char mod, int 
             break;
         case 1:
             decode_effective_address_calc_disp(rm);
-            disp_8 = *(byte_2 + 1);
+            disp_8 = (int8_t)*(byte_2 + 1);
             if (disp_8 != 0) {
                 printf(" + %d]", disp_8);
             } else {
@@ -204,9 +205,9 @@ void decode_eac(unsigned char* byte_2, unsigned char rm, unsigned char mod, int 
             break;
         case 2:
             decode_effective_address_calc_disp(rm);
-            disp_16 = *(unsigned int*)(byte_2 + 1);
+            disp_16 = *(int16_t*)(byte_2 + 1);
             if (disp_16 != 0) {
-                printf(" + %hi]", disp_16);
+                printf(" + %d]", disp_16);
             } else {
                 printf("]");
             }
@@ -249,17 +250,17 @@ unsigned char decode_byte_2(unsigned char* byte_2, int width, int d) {
 }
 
 // decode byte 2 in immediate mode
-void decode_byte_2_i(unsigned char byte_2, int width) {
-    signed char data_8 = 0;
-    signed short data_16 = 0;
+void decode_byte_2_i(unsigned char* byte_2, int width) {
+    int8_t data_8 = 0;
+    int16_t data_16 = 0;
 
     if (width == 1) {
-        data_16 = (signed short) byte_2;
+        data_16 = (int16_t) *byte_2;
         printf(", ");
-        printf("%hi", data_16);
+        printf("%d", data_16);
         printf("\n");
     } else if (width == 0) {
-        data_8 = (signed char) byte_2;
+        data_8 = (int8_t) *byte_2;
         printf(", ");
         printf("%d", data_8);
         printf("\n");
@@ -296,7 +297,7 @@ void decode_assembly(unsigned char* buffer, int inst_size) {
 
         if (mode == IMMEDIATE_MODE) {
             width_immediate = is_wide_immediate(buffer[i]);
-            decode_byte_2_i(buffer[i + 1], width_immediate);
+            decode_byte_2_i(buffer + i + 1, width_immediate);
             if (width_immediate == 1) {
                 i += 3;
             } else {
