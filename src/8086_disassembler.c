@@ -64,119 +64,55 @@ int decode_byte_1(unsigned char byte_1) {
 }
 
 void decode_reg_wide(unsigned char reg) {
-    switch (reg) {
-        case 0:
-            printf("ax");
-            break;
-        case 1:
-            printf("cx");
-            break;
-        case 2:
-            printf("dx");
-            break;
-        case 3:
-            printf("bx");
-            break;
-        case 4:
-            printf("sp");
-            break;
-        case 5:
-            printf("bp");
-            break;
-        case 6:
-            printf("si");
-            break;
-        case 7:
-            printf("di");
-            break;
-    }
+    const char* reg_list[8];
+    reg_list[0] = "ax";
+    reg_list[1] = "cx";
+    reg_list[2] = "dx";
+    reg_list[3] = "bx";
+    reg_list[4] = "sp";
+    reg_list[5] = "bp";
+    reg_list[6] = "si";
+    reg_list[7] = "di";
+    printf("%s", reg_list[reg]);
 }
 
 void decode_reg(unsigned char reg) {
-    switch (reg) {
-        case 0:
-            printf("al");
-            break;
-        case 1:
-            printf("cl");
-            break;
-        case 2:
-            printf("dl");
-            break;
-        case 3:
-            printf("bl");
-            break;
-        case 4:
-            printf("ah");
-            break;
-        case 5:
-            printf("ch");
-            break;
-        case 6:
-            printf("dh");
-            break;
-        case 7:
-            printf("bh");
-            break;
-    }
+    const char* reg_list[8];
+    reg_list[0] = "al";
+    reg_list[1] = "cl";
+    reg_list[2] = "dl";
+    reg_list[3] = "bl";
+    reg_list[4] = "ah";
+    reg_list[5] = "ch";
+    reg_list[6] = "dh";
+    reg_list[7] = "bh";
+    printf("%s", reg_list[reg]);
 }
 
 void decode_effective_address_calc(unsigned char rm) {
-    switch (rm) {
-        case 0:
-            printf("[bx + si]");
-            break;
-        case 1:
-            printf("[bx + di]");
-            break;
-        case 2:
-            printf("[bp + si]");
-            break;
-        case 3:
-            printf("[bp + di]");
-            break;
-        case 4:
-            printf("[si]");
-            break;
-        case 5:
-            printf("[di]");
-            break;
-        case 6:
-            printf("[bp]");
-            break;
-        case 7:
-            printf("[bx]");
-            break;
-    }
+    const char* rm_list[8];
+    rm_list[0] = "[bx + si]";
+    rm_list[1] = "[bx + di]";
+    rm_list[2] = "[bp + si]";
+    rm_list[3] = "[bp + di]";
+    rm_list[4] = "si";
+    rm_list[5] = "di";
+    rm_list[6] = "bp";
+    rm_list[7] = "bx";
+    printf("%s", rm_list[rm]);
 }
 
 void decode_effective_address_calc_disp(unsigned char rm) {
-    switch (rm) {
-        case 0:
-            printf("[bx + si");
-            break;
-        case 1:
-            printf("[bx + di");
-            break;
-        case 2:
-            printf("[bp + si");
-            break;
-        case 3:
-            printf("[bp + di");
-            break;
-        case 4:
-            printf("[si");
-            break;
-        case 5:
-            printf("[di");
-            break;
-        case 6:
-            printf("[bp");
-            break;
-        case 7:
-            printf("[bx");
-            break;
-    }
+    const char* rm_list[8];
+    rm_list[0] = "[bx + si";
+    rm_list[1] = "[bx + di";
+    rm_list[2] = "[bp + si";
+    rm_list[3] = "[bp + di";
+    rm_list[4] = "[si";
+    rm_list[5] = "[di";
+    rm_list[6] = "[bp";
+    rm_list[7] = "[bx";
+    printf("%s", rm_list[rm]);
 }
 void decode_reg_field(unsigned char reg, int width) {
     if (width == 1) {
