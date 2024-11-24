@@ -11,6 +11,18 @@
 #define IMMEDIATE_MODE 1
 #define MOD_BITS 3
 
+const char* reg_list_wide[8] = {"ax", "cx", "dx", "bx",
+                                "sp", "bp" , "si", "di"};
+
+const char* reg_list[8] = {"ah", "ch", "dh", "bh",
+                           "al", "cl", "dl", "bl"};
+
+const char* rm_list_eac[8] = {"[bx + si]", "[bx + di]", "[bp + si]",
+                              "[bp + di]", "si", "di", "bp", "bx"};
+
+const char* rm_list_eac_disp[8] = {"[bx + si", "[bx + di", "[bp + si",
+                                   "[bp + di", "[si", "[di", "[bp", "[bx"};
+
 unsigned char* initialize_buffer(unsigned char* buffer, int buffer_size);
 int is_wide(unsigned char byte_1);
 int is_wide_immediate(unsigned char byte_1);
@@ -46,73 +58,43 @@ int decode_byte_1(unsigned char byte_1) {
     switch (opcode_immediate) {
         case 176:
             printf("mov ");
-            if ((byte_1 & WIDTH_BIT_IMMEDIATE) == WIDTH_BIT_IMMEDIATE) {
-                decode_reg_wide(byte_1 & REG_IMMEDIATE_MASK);
-            } else {
-                decode_reg(byte_1 & REG_IMMEDIATE_MASK);
-            }
-            retval = IMMEDIATE_MODE;
             break;
+        case 128:
+            printf("add ");
+            break;
+        if ((byte_1 & WIDTH_BIT_IMMEDIATE) == WIDTH_BIT_IMMEDIATE) {
+            decode_reg_wide(byte_1 & REG_IMMEDIATE_MASK);
+        } else {
+            decode_reg(byte_1 & REG_IMMEDIATE_MASK);
+        }
+        retval = IMMEDIATE_MODE;
     }
     switch (opcode) {
+        case 0:
+            printf("add ");
+            break;
         case 136:
             printf("mov ");
             break;
     }
 
-    return retval;
+    return 0;
 }
 
 void decode_reg_wide(unsigned char reg) {
-    const char* reg_list[8];
-    reg_list[0] = "ax";
-    reg_list[1] = "cx";
-    reg_list[2] = "dx";
-    reg_list[3] = "bx";
-    reg_list[4] = "sp";
-    reg_list[5] = "bp";
-    reg_list[6] = "si";
-    reg_list[7] = "di";
-    printf("%s", reg_list[reg]);
+    printf("%s", reg_list_wide[reg]);
 }
 
 void decode_reg(unsigned char reg) {
-    const char* reg_list[8];
-    reg_list[0] = "al";
-    reg_list[1] = "cl";
-    reg_list[2] = "dl";
-    reg_list[3] = "bl";
-    reg_list[4] = "ah";
-    reg_list[5] = "ch";
-    reg_list[6] = "dh";
-    reg_list[7] = "bh";
     printf("%s", reg_list[reg]);
 }
 
 void decode_effective_address_calc(unsigned char rm) {
-    const char* rm_list[8];
-    rm_list[0] = "[bx + si]";
-    rm_list[1] = "[bx + di]";
-    rm_list[2] = "[bp + si]";
-    rm_list[3] = "[bp + di]";
-    rm_list[4] = "si";
-    rm_list[5] = "di";
-    rm_list[6] = "bp";
-    rm_list[7] = "bx";
-    printf("%s", rm_list[rm]);
+    printf("%s", rm_list_eac[rm]);
 }
 
 void decode_effective_address_calc_disp(unsigned char rm) {
-    const char* rm_list[8];
-    rm_list[0] = "[bx + si";
-    rm_list[1] = "[bx + di";
-    rm_list[2] = "[bp + si";
-    rm_list[3] = "[bp + di";
-    rm_list[4] = "[si";
-    rm_list[5] = "[di";
-    rm_list[6] = "[bp";
-    rm_list[7] = "[bx";
-    printf("%s", rm_list[rm]);
+    printf("%s", rm_list_eac_disp[rm]);
 }
 void decode_reg_field(unsigned char reg, int width) {
     if (width == 1) {
