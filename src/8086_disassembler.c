@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 // bit masks
-int OPCODE_BITS = 252;
+int OPCODE_BITS = 63;
 int OPCODE_BITS_IMMEDIATE = 176;
 int WIDTH_BIT = 1;
 int WIDTH_BIT_IMMEDIATE = 8;
@@ -54,11 +54,10 @@ int get_direction_bit(unsigned char instruction) {
 }
 
 int decode_byte_1(unsigned char byte_1) {
-    int opcode = byte_1 & OPCODE_BITS;
-    int opcode_immediate = byte_1 & OPCODE_BITS_IMMEDIATE;
+    int opcode = (byte_1 >> 2) & OPCODE_BITS;
     int retval = 0;
-    switch (opcode_immediate) {
-        case 176:
+    switch (opcode) {
+        case 34:
             printf("mov ");
             break;
         case 128:
@@ -71,6 +70,7 @@ int decode_byte_1(unsigned char byte_1) {
         }
         retval = IMMEDIATE_MODE;
     }
+    /*
     switch (opcode) {
         case 0:
             printf("add ");
@@ -79,8 +79,9 @@ int decode_byte_1(unsigned char byte_1) {
             printf("mov ");
             break;
     }
+    */
 
-    return retval;
+    return 0;
 }
 
 void decode_reg_wide(unsigned char reg) {
