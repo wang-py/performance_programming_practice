@@ -60,6 +60,14 @@ int decode_byte_1(unsigned char byte_1) {
         case 34:
             printf("mov ");
             break;
+        case 49:
+            printf("mov ");
+            retval = IMMEDIATE_MODE;
+            break;
+        case 46:
+            printf("mov ");
+            retval = IMMEDIATE_MODE;
+            break;
         case 0:
             printf("add ");
             break;
@@ -74,7 +82,6 @@ int decode_byte_1(unsigned char byte_1) {
         } else {
             decode_reg(byte_1 & REG_IMMEDIATE_MASK);
         }
-        retval = IMMEDIATE_MODE;
     }
     /*
     switch (opcode) {
@@ -87,7 +94,7 @@ int decode_byte_1(unsigned char byte_1) {
     }
     */
 
-    return 0;
+    return retval;
 }
 
 void decode_reg_wide(unsigned char reg) {
