@@ -60,8 +60,14 @@ int decode_byte_1(unsigned char byte_1) {
         case 34:
             printf("mov ");
             break;
-        case 128:
+        case 0:
             printf("add ");
+            break;
+        case 10:
+            printf("sub ");
+            break;
+        case 14:
+            printf("cmp ");
             break;
         if ((byte_1 & WIDTH_BIT_IMMEDIATE) == WIDTH_BIT_IMMEDIATE) {
             decode_reg_wide(byte_1 & REG_IMMEDIATE_MASK);
