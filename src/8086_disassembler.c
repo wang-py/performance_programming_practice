@@ -1,15 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#define OPCODE_BITS 252
-#define OPCODE_BITS_IMMEDIATE 176
-#define WIDTH_BIT 1
-#define WIDTH_BIT_IMMEDIATE 8
-#define REG_BITS 7
-#define RM_BITS 7
-#define REG_IMMEDIATE_MASK 7
-#define IMMEDIATE_MODE 1
-#define MOD_BITS 3
+
+// bit masks
+int OPCODE_BITS = 252;
+int OPCODE_BITS_IMMEDIATE = 176;
+int WIDTH_BIT = 1;
+int WIDTH_BIT_IMMEDIATE = 8;
+int REG_BITS = 7;
+int RM_BITS = 7;
+int REG_IMMEDIATE_MASK = 7;
+int IMMEDIATE_MODE = 1;
+int MOD_BITS = 3;
 
 const char* reg_list_wide[8] = {"ax", "cx", "dx", "bx",
                                 "sp", "bp" , "si", "di"};
@@ -78,7 +80,7 @@ int decode_byte_1(unsigned char byte_1) {
             break;
     }
 
-    return 0;
+    return retval;
 }
 
 void decode_reg_wide(unsigned char reg) {
