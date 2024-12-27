@@ -246,7 +246,7 @@ void decode_assembly(unsigned char* buffer, int inst_size) {
             reg = (*(buffer + i + 1) >> 3) & REG_BITS;
             decode_non_mov_op(reg);
             decode_byte_2_i(buffer + i + 1, width_immediate);
-            if (width_immediate == 1) {
+            if (width == 1) {
                 i += 3;
             } else {
                 i += 2;
