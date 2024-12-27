@@ -13,7 +13,7 @@ int REG_IMMEDIATE_MASK = 7;
 int IMMEDIATE_MODE = 1;
 int MOD_BITS = 3;
 
-const char* op[8] = {"add", "", "", "", "", "sub", "", "cmp"};
+const char* op[8] = {"add ", "", "", "", "", "sub ", "", "cmp "};
 
 const char* reg_list_wide[8] = {"ax", "cx", "dx", "bx",
                                 "sp", "bp" , "si", "di"};
@@ -232,9 +232,10 @@ void decode_assembly(unsigned char* buffer, int inst_size) {
     int width = 0;
     int width_immediate = 0;
     unsigned char disp_mode = 0;
+    // direction of mov
     int d = 0;
     unsigned char reg = 0;
-    // direction of mov
+    unsigned char byte_1 = 0;
     while (i < inst_size) {
         // printf("%x %x\n", buffer[i], buffer[i + 1]);
         width = is_wide(buffer[i]);
@@ -245,6 +246,12 @@ void decode_assembly(unsigned char* buffer, int inst_size) {
             width_immediate = is_wide_immediate(buffer[i]);
             reg = (*(buffer + i + 1) >> 3) & REG_BITS;
             decode_non_mov_op(reg);
+            byte_1 = *(buffer + i);
+            if ((byte_1 & WIDTH_BIT_IMMEDIATE) == WIDTH_BIT_IMMEDIATE) {
+                decode_reg_wide(byte_1 & REG_IMMEDIATE_MASK);
+            } else {
+                decode_reg(byte_1 & REG_IMMEDIATE_MASK);
+            }
             decode_byte_2_i(buffer + i + 1, width_immediate);
             if (width == 1) {
                 i += 3;
