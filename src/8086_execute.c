@@ -7,11 +7,20 @@
 static char* sub_process_name = "../sim86/sim86";
 
 int call_disassembler(char* argv[]) {
+    int pipefd[2];
+    pipe(pipefd);
     int pid = fork();
+
     if (pid == -1) {
         printf("Failed to call fork()\n");
         exit(EXIT_FAILURE);
     } else if (pid == 0) {
+        close(pipefd[0]);
+
+        dup2(pipefd[1], 1);
+        dup2(pipefd[1], 2);
+
+        close(pipefd[1]);
         argv[0] = sub_process_name;
         execv(argv[0], argv);
         perror("execv");
@@ -20,8 +29,12 @@ int call_disassembler(char* argv[]) {
 
     int status;
     int wait_result;
-    while ((wait_result = wait(&status)) != -1) {
-        printf("Process %lu returned result: %d\n", wait_result, status);
+    char buffer[1024];
+
+    close(pipefd[1]);
+
+    while (read(pipefd[0], buffer, sizeof(buffer)) != 0) {
+        printf(buffer);
     }
 
     printf("All children have finished.\n");
